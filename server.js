@@ -2,12 +2,15 @@ import express from "express";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
-app.use(cors())
+app.use(cors());
 app.use(express.json());
-const port = process.env.PORT || 5000
+
+const port = process.env.PORT || 5000;
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
@@ -70,8 +73,17 @@ app.post("/send-email", async (req, res) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "✅ We received your message!",
-      text: `Hi ${name},\n\nThanks for reaching out! We'll be in touch soon.\n\nBest regards,\nVamshi Gowni`,
+      subject: "Thanks for reaching out!",
+      text: `Hi ${name},
+
+Thanks for getting in touch with me! I’ve received your message and will review it shortly.
+You can expect a reply within the next 24–48 hours.
+
+If it’s urgent, feel free to reach out to me directly at ${process.env.EMAIL_USER}.
+
+Best regards,
+Vamshi Gowni
+`,
     });
     console.log("✅ Auto-reply sent to sender");
 
@@ -83,5 +95,5 @@ app.post("/send-email", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log("🚀 Server running on http://localhost:5000");
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });
