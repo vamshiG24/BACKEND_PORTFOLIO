@@ -2,15 +2,12 @@ import express from "express";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import cors from 'cors';
 
 dotenv.config();
 const app = express();
 app.use(cors())
 app.use(express.json());
-
-const port = process.env.PORT || 5000;
-
+const port = process.env.PORT || 5000
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
@@ -30,7 +27,7 @@ app.post("/send-email", async (req, res) => {
   console.log("🔔 /send-email called");
   console.log("Request body:", req.body);
 
-  const { name, email } = req.body;
+  const { name, email, subject, message } = req.body;
 
   if (!name || !email) {
     console.log("❌ Missing name or email");
@@ -38,11 +35,17 @@ app.post("/send-email", async (req, res) => {
   }
 
   try {
-    // Save to MongoDB
-    console.log("💾 Saving contact to DB...");
-    const newContact = new Contact({ name, email });
-    await newContact.save();
-    console.log("✅ Contact saved:", newContact);
+    // Check if this contact already exists (same name & email)
+    const existing = await Contact.findOne({ name, email });
+
+    if (existing) {
+      console.log("⚠️ Duplicate contact detected, skipping DB save.");
+    } else {
+      console.log("💾 Saving contact to DB...");
+      const newContact = new Contact({ name, email });
+      await newContact.save();
+      console.log("✅ Contact saved:", newContact);
+    }
 
     // Email Transporter
     let transporter = nodemailer.createTransport({
@@ -58,8 +61,8 @@ app.post("/send-email", async (req, res) => {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       replyTo: email,
-      subject: "New Contact Form Submission",
-      text: `📩 New contact:\n\nName: ${name}\nEmail: ${email}`,
+      subject: subject || "New Contact Form Submission",
+      text: `📩 New contact message:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage: ${message}`,
     });
     console.log("✅ Email sent to owner");
 
